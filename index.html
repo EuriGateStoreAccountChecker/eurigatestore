@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recent Match Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Recent Match Checker</h1>
+        <button onclick="getRecentMatch()">Check Recent Match</button>
+        <div id="matchResult"></div>
+    </div>
+
+    <script>
+        function getRecentMatch() {
+            // API Key
+            const riotAPIKey = "RGAPI-b794344a-5528-4612-9da6-55e16a372a54";
+
+            // Function to fetch recent match details
+            async function fetchRecentMatch(username, tag) {
+                const getPuuid = `https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${username}/${tag}?api_key=${riotAPIKey}`;
+                const response = await fetch(getPuuid);
+                const data = await response.json();
+
+                if (data && data.puuid) {
+                    const puuid = data.puuid;
+                    const returnMatches = `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=20&api_key=${riotAPIKey}`;
+                    const matchesResponse = await fetch(returnMatches);
+                    const matchData = await matchesResponse.json();
+
+                    if (matchData && matchData.length > 0) {
+                        const firstMatchId = matchData[0];
+                        const finalResult = `https://europe.api.riotgames.com/lol/match/v5/matches/${firstMatchId}?api_key=${riotAPIKey}`;
+                        const matchDetail = await fetch(finalResult);
+                        const matchRes = await matchDetail.json();
+
+                        const gameCreationTime = new Date(matchRes.info.gameCreation);
+                        return gameCreationTime.toLocaleString();
+                    }
+                }
+                return "No recent match found.";
+            }
+
+            // Read accounts from file and display recent match for each
+            async function displayRecentMatches() {
+                const accountsResponse = await fetch("Accounts.txt");
+                const accountsData = await accountsResponse.text();
+                const accounts = accountsData.split('\n');
+
+                const matchResultDiv = document.getElementById("matchResult");
+                matchResultDiv.innerHTML = "";
+
+                for (const account of accounts) {
+                    const [username, tag] = account.split(':');
+                    const recentMatch = await fetchRecentMatch(username, tag);
+                    matchResultDiv.innerHTML += `<p>${username}: ${recentMatch}</p>`;
+                }
+            }
+
+            displayRecentMatches();
+        }
+    </script>
+</body>
+</html>
