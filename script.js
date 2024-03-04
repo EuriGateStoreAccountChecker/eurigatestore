@@ -1,58 +1,42 @@
-document.addEventListener("DOMContentLoaded", function() {
-    const checkButton = document.getElementById("checkButton");
-    const matchResultDiv = document.getElementById("matchResult");
+// List of adjectives and nouns for generating names
+const adjectives = ["F13rc3", "M1gh7y", "S4v4g3", "Br4v3", "F34rl3ss", "Sw1ft", "7hund3r0u5", "L3g3nd4ry", "3p1c", "N0bl3"];
+const nouns = ["W4rr10r", "Kn1gh7", "H3r0", "Ch4mp10n", "Gl4d14t0r", "4554551n", "W1z4rd", "R0gu3", "P41ad1n", "B4rb4r14n"];
 
-    checkButton.addEventListener("click", async function() {
-        try {
-            const accountsResponse = await fetch("Accounts.txt");
-            const accountsData = await accountsResponse.text();
-            const accounts = accountsData.split('\n');
+// Function to generate a random name
+function generateName() {
+    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    const fullName = adjective + " " + noun;
+    return fullName;
+}
 
-            matchResultDiv.innerHTML = "";
-
-            for (const account of accounts) {
-                const [username, tag] = account.split(':');
-                const recentMatch = await fetchRecentMatch(username, tag);
-                matchResultDiv.innerHTML += `<p>${username}: ${recentMatch}</p>`;
-            }
-        } catch (error) {
-            console.error("Error fetching accounts:", error);
-        }
-    });
-
-    async function fetchRecentMatch(username, tag) {
-        try {
-            const riotAPIKey = "RGAPI-b794344a-5528-4612-9da6-55e16a372a54";
-            const getPuuid = `https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${username}/${tag}?api_key=${riotAPIKey}`;
-            const response = await fetch(getPuuid);
-            const data = await response.json();
-
-            console.log("Data:", data);
-
-            if (data && data.puuid) {
-                const puuid = data.puuid;
-                const returnMatches = `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=20&api_key=${riotAPIKey}`;
-                const matchesResponse = await fetch(returnMatches);
-                const matchData = await matchesResponse.json();
-
-                console.log("Match data:", matchData);
-
-                if (matchData && matchData.length > 0) {
-                    const firstMatchId = matchData[0];
-                    const finalResult = `https://europe.api.riotgames.com/lol/match/v5/matches/${firstMatchId}?api_key=${riotAPIKey}`;
-                    const matchDetail = await fetch(finalResult);
-                    const matchRes = await matchDetail.json();
-
-                    console.log("Match details:", matchRes);
-
-                    const gameCreationTime = new Date(matchRes.info.gameCreation);
-                    return gameCreationTime.toLocaleString();
-                }
-            }
-            return "No recent match found.";
-        } catch (error) {
-            console.error("Error fetching recent match:", error);
-            return "Error fetching recent match";
+// Function to check if a name is sexual
+function isSexual(name) {
+    const sexualWords = ["sexual_word1", "sexual_word2", "sexual_word3"]; // Add your own sexual words here
+    for (let i = 0; i < sexualWords.length; i++) {
+        if (name.toLowerCase().includes(sexualWords[i])) {
+            return true;
         }
     }
-});
+    return false;
+}
+
+// Function to generate a new name and display it
+function generateAndDisplayName() {
+    let newName;
+    do {
+        newName = generateName();
+    } while (isSexual(newName));
+    document.getElementById("generated-name").textContent = newName;
+}
+
+// Event listener for the button click
+document.getElementById("generate-btn").addEventListener("click", generateAndDisplayName);
+
+// Generating around 200 names
+for (let i = 0; i < 200; i++) {
+    const newName = generateName();
+    const listItem = document.createElement("li");
+    listItem.textContent = newName;
+    document.getElementById("name-list").appendChild(listItem);
+}
